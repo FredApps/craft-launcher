@@ -1,0 +1,17 @@
+name: Nix
+'on':
+  pull_request:
+    types:
+    - opened
+    - synchronize
+    - reopened
+    - labeled
+  workflow_dispatch: null
+permissions:
+  contents: read
+concurrency:
+  group: nix-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  nix:
+    uses: storytold/craft-common-actions/.github/workflows/nix.yml@2b3fb9dc05036f73c77d18f753a3aa9da55fa386

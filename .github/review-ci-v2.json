@@ -1,0 +1,16 @@
+{
+  "base": "68eeee97b813af4cad59e1f216ea5ca93151e420",
+  "head": "07e370f1fa7dfce746485f7bb0d4c54555941c06",
+  "platforms": [],
+  "policy": "review-ci-v2.2-no-sonar",
+  "pr": 401,
+  "repository": "storytold/craft-launcher",
+  "source_tree": "fd3cfd93c34a2decc78f9c117041114989c87ae3",
+  "workflows": {
+    ".github/workflows/ci.yml": "d707423b5d9acaf6e7e86aa41d666bd028a5c09148029b1fcc458e76633c762f",
+    ".github/workflows/freebsd.yml": "2fa86b2bde3a70f3d29bf37531968ebdf512551b9e46bb078887e0d6bfa3ee34",
+    ".github/workflows/nix.yml": "472141d86ba737061146d78206c3516e4762e453dad638e42850d45e79709192",
+    ".github/workflows/packaging-lint.yml": "5deb22078cd096770ecc518276f0fe17406bf1fad268740933b78c6aea4c284a",
+    ".github/workflows/windows-arm64.yml": "093ffb9978459257f38a4c69dc45b0e01aeec46a23c21c19bbf22ec1ceeaa962"
+  }
+}
