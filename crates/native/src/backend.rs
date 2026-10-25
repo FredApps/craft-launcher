@@ -333,6 +333,9 @@ impl NativeBackend {
         let platform = self.platform;
         let options = self.options();
         let source = self.source.clone();
+        // Taken now, before the job's thread runs, so apps started together (Update all) download
+        // in screen order whichever job reaches its download first.
+        let place = (!uninstall).then(|| install::DOWNLOADS.join(app.id));
         std::thread::spawn(move || {
             let job = job;
             let existing = shared.installed.lock().unwrap_or_else(PoisonError::into_inner).get(app.id).cloned();
@@ -363,6 +366,7 @@ impl NativeBackend {
                     &stop,
                     work == Work::Replace,
                     source.as_deref(),
+                    place,
                 );
                 // Stopped by the connection rather than by the user: say so, and how to go on.
                 match r {
@@ -511,6 +515,7 @@ fn run_install(
     stop: &Stop,
     replace: bool,
     source: Option<&dyn ReleaseSource>,
+    place: Option<crate::downloads::Place<'static>>,
 ) -> Result<String, String> {
     if let Some(msg) = existing.and_then(|e| install::managed_elsewhere(app, e, false)) {
         return Err(msg);
@@ -579,7 +584,7 @@ fn run_install(
         last_emit = Instant::now();
         shared.emit(Event::Progress { app: app.id.to_string(), phase: p });
     };
-    let mut job = Job { http, paths, stop, phase: &mut phase, install_locations: &options.install_locations, replace, downgrade };
+    let mut job = Job { http, paths, stop, phase: &mut phase, install_locations: &options.install_locations, replace, downgrade, place };
     let mut commit_record = |record: &crate::manifest::Record| {
         let mut manifest = shared.manifest.lock().unwrap_or_else(PoisonError::into_inner);
         let mut updated = manifest.clone();
