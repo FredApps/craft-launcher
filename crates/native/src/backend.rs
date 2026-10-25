@@ -298,6 +298,8 @@ impl NativeBackend {
         });
     }
 
+    /// Starts an install, update or removal job for `app_id` on its own thread. An install takes
+    /// its place in the download line first, so apps started together download in screen order.
     fn start_job(&self, app_id: &str, work: Work) {
         let uninstall = work == Work::Uninstall;
         let Some(app) = CraftApp::by_id(app_id) else { return };
@@ -495,6 +497,8 @@ fn downgrade_previous(
     })
 }
 
+/// Plans and runs an install or update of `app` from its latest known release, and returns the
+/// message to show. `place` is the job's spot in the download line, used when the download starts.
 #[allow(clippy::too_many_arguments)]
 fn run_install(
     app: &CraftApp,
@@ -1129,6 +1133,8 @@ impl NativeBackend {
 }
 
 impl Backend for NativeBackend {
+    /// Carries out a command from the UI. Long work (checks, installs, removals) runs on its own
+    /// thread.
     fn send(&mut self, command: Command) {
         match command {
             Command::CheckForUpdates { force } => self.check(force),
