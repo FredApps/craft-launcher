@@ -351,6 +351,8 @@ fn spanish_locales_and_plurals_work() {
     assert_eq!(message(Lang::ES, "PhotoCraft updated to 0.5.0"), "PhotoCraft actualizada a 0.5.0");
 }
 
+/// Bosnian locale tags resolve to Bosnian, its plural rule picks `one`, `few` and `other` at the
+/// edges (21 is `one`, 12–14 are `other`), and counts, dates and messages read in Bosnian.
 #[test]
 fn bosnian_locales_and_plurals_work() {
     for tag in ["bs", "bs-BA", "bs_BA.UTF-8", "bs-Latn-BA", "BS_ba"] {
@@ -571,6 +573,8 @@ fn complete_catalogs_translate_package_formats() {
     }
 }
 
+/// The Settings picker lists English first, then every other language by its own name with accents
+/// folded (Bosanski under B, Čeština under C), Latin names before Cyrillic and Cyrillic before CJK.
 #[test]
 fn picker_lists_english_first_then_names_alphabetically() {
     let order = Lang::for_picker();
