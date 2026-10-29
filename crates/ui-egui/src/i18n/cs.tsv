@@ -352,3 +352,6 @@ filter	Installed	Nainstalováno
 	Last updated: {date}	Naposledy aktualizováno: {date}
 column	Version	Verze
 column	Author	Autor
+
+
+notecraft	Local-first notes with canvas pages and OneNote import	Lokální poznámky se stránkami plátna a importem OneNote

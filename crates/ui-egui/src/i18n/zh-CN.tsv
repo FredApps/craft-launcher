@@ -254,6 +254,7 @@ solidcraft	Parametric 3D CAD	参数化三维 CAD
 cadcraft	Computer-aided design and drafting	计算机辅助设计与制图
 soundcraft	Recording, editing and mixing audio	音频录制、编辑与混音
 figcraft	Interface design and prototyping	界面设计与原型制作
+notecraft	Local-first notes with canvas pages and OneNote import	本地优先的笔记应用，支持画布页面和 OneNote 导入
 
 	Show in Files	在文件管理器中显示
 	Loading ArtCraft Launcher…	正在加载 ArtCraft Launcher…
@@ -352,3 +353,4 @@ figcraft	Interface design and prototyping	界面设计与原型制作
 	Last updated: {date}	最后更新：{date}
 column	Author	作者
 column	Version	版本
+

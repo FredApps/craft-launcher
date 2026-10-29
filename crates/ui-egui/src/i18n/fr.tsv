@@ -176,6 +176,7 @@ solidcraft	Parametric 3D CAD	CAO paramétrique 3D
 cadcraft	Computer-aided design and drafting	Conception et dessin assistés par ordinateur
 soundcraft	Recording, editing and mixing audio	Enregistrement, édition et mixage audio
 figcraft	Interface design and prototyping	Design d'interfaces et prototypage
+notecraft	Local-first notes with canvas pages and OneNote import	Notes locales avec pages de canevas et importation OneNote
 
 # Contextual: month abbreviations for date rendering
 month	Jan	janv.
@@ -382,3 +383,5 @@ filter	Installed	Installées
 	Last updated: {date}	Dernière mise à jour : {date}
 column	Version	Version
 column	Author	Auteur
+
+
