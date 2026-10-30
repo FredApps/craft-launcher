@@ -264,7 +264,7 @@ pub fn window_edges(ctx: &egui::Context) {
             .movable(false)
             .constrain(false)
             .fixed_pos(rect.min)
-            .show(ctx, |ui| ui.allocate_space(rect.size()));
+            .show(ctx, |ui| ui.allocate_response(rect.size(), egui::Sense::CLICK));
     }
     let Some(p) = ctx.input(|i| i.pointer.hover_pos()).filter(|p| r.contains(*p)) else { return };
     let near = |d: f32| d < RESIZE_EDGE;
