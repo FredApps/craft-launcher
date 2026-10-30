@@ -2602,6 +2602,7 @@ mod tests {
                 install_locations: &locations,
                 replace: false,
                 downgrade: Some(Downgrade::Reinstall { previous: &newer, asset: &newer_msi }),
+                place: None,
             };
             install(app, &older, &older_msi, PackageKind::Msi, Some(&portable), None, &mut job).unwrap_err()
         };
@@ -2663,6 +2664,7 @@ mod tests {
                 install_locations: &InstallLocations::default(),
                 replace: false,
                 downgrade,
+                place: None,
             };
             install(app, &release, &asset, PackageKind::Dmg, Some(&installed), None, &mut job).unwrap_err()
         };
