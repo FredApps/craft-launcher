@@ -7,6 +7,7 @@
 
 	Launcher	Launcher
 	Craft App Suite	Craft App Suite
+	by {name}	od {name}
 	Open Source Tools for Creatives, Makers, and Builders	Alati otvorenog koda za kreativce, majstore i graditelje
 	Settings	Postavke
 	Check for updates	Provjeri ažuriranja
@@ -155,6 +156,7 @@ designcraft	Page layout and publishing	Prijelom stranica i izdavaštvo
 wordcraft	Writing and document design	Pisanje i dizajn dokumenata
 deckcraft	Presentations and slide shows	Prezentacije i projekcije slajdova
 gridcraft	Spreadsheets and data	Tabele i podaci
+solidcraft	Parametric 3D CAD	Parametarsko 3D projektovanje
 cadcraft	Computer-aided design and drafting	Računarski potpomognuto projektovanje i crtanje
 soundcraft	Recording, editing and mixing audio	Snimanje, uređivanje i miješanje zvuka
 figcraft	Interface design and prototyping	Dizajn interfejsa i prototipiranje
@@ -349,3 +351,15 @@ filter	Installed	Instalirano
 	Show {n} more changes	Prikaži još promjena: {n}
 	Last updated: {date}	Posljednje ažuriranje: {date}
 column	Version	Verzija
+column	Author	Autor
+	Choose version	Odaberi verziju
+	latest {version}	najnovija {version}
+	{version} (latest release)	{version} (najnovije izdanje)
+	Launcher version	Verzija Launchera
+	Nightly	Noćna verzija
+	Nightly (none published yet)	Noćna verzija (još nijedna nije objavljena)
+	Install version {version}	Instaliraj verziju {version}
+	Download selected version	Preuzmi odabranu verziju
+	Older launcher versions require a manual reinstall.	Starije verzije Launchera zahtijevaju ručnu ponovnu instalaciju.
+	Your files may not open in older versions.	Vaše datoteke se možda neće otvoriti u starijim verzijama.
+	Enable automatic installs in Settings to follow new nightly builds.	Omogućite automatske instalacije u Postavkama da pratite nove noćne verzije.
