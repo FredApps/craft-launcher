@@ -88,7 +88,8 @@ pub(crate) fn appimage_version(name: &str, stems: &[&str]) -> Option<Option<Stri
     (parsed.kind == artcraft_launcher_core::PackageKind::AppImage && parsed.token.starts_with("linux-")).then_some(Some(parsed.version))
 }
 
-/// Who our Windows Installer packages name as their publisher.
+/// Who our Windows Installer packages name as their publisher. A community app's names its own
+/// ([`CraftApp::msi_publisher`]).
 #[cfg_attr(not(windows), allow(dead_code))]
 const PUBLISHER: &str = "Learning Machines LLC";
 
@@ -96,7 +97,7 @@ const PUBLISHER: &str = "Learning Machines LLC";
 /// installers have registered.
 #[cfg_attr(not(windows), allow(dead_code))]
 fn is_installer_entry(app: &CraftApp, display_name: &str, publisher: &str) -> bool {
-    publisher == PUBLISHER && app.names().any(|n| n == display_name)
+    publisher == app.msi_publisher.unwrap_or(PUBLISHER) && app.names().any(|n| n == display_name)
 }
 
 /// Where a Windows install of `app` may keep its exe, in the order to try: the entry's
@@ -183,7 +184,9 @@ pub mod macos {
     pub fn read_bundle(app: &CraftApp, path: &Path) -> Option<Installed> {
         let plist = plist::Value::from_file(path.join("Contents/Info.plist")).ok()?;
         let dict = plist.as_dictionary()?;
-        if dict.get("CFBundleIdentifier")?.as_string()? != app.bundle_id() {
+        // Its current bundle id or an older one (SolidCraft was ai.storyteller.solidcraft).
+        let id = dict.get("CFBundleIdentifier")?.as_string()?;
+        if !app.bundle_ids().any(|b| b == id) {
             return None;
         }
         // `<App>Version` carries the full version including a pre-release suffix;
@@ -437,32 +440,48 @@ pub mod linux {
         };
         let t = Duration::from_secs(10);
         let mut out = Vec::new();
-        let mut add = |manager, list: Vec<(String, String)>| {
-            out.extend(list.into_iter().filter(|(n, _)| ours(n)).map(|(name, version)| Package { manager, name, version }));
+        let mut add = |manager, user, list: Vec<(String, String)>| {
+            out.extend(list.into_iter().filter(|(n, _)| ours(n)).map(|(name, version)| Package { manager, name, version, user }));
         };
         if let Some(list) = capture("dpkg-query", &["-W", "-f", "${Package}|${db:Status-Status}|${Version}\n"], t) {
-            add(InstallSource::Deb, packages::parse_dpkg(&list));
+            add(InstallSource::Deb, false, packages::parse_dpkg(&list));
         }
         if let Some(list) = capture("rpm", &["-qa", "--qf", "%{NAME}|%{VERSION}\n"], t) {
-            add(InstallSource::Rpm, packages::parse_rpm(&list));
+            add(InstallSource::Rpm, false, packages::parse_rpm(&list));
         }
         // Only run `pacman` where its database exists: elsewhere `pacman` on PATH may be an unrelated program
         // (the Pac-Man game in /usr/games on Debian-family systems).
         if has_pacman_db()
             && let Some(list) = capture("pacman", &["-Q"], t)
         {
-            add(InstallSource::Pacman, packages::parse_pacman(&list));
+            add(InstallSource::Pacman, false, packages::parse_pacman(&list));
         }
         let arch = format!("--arch={}", std::env::consts::ARCH);
-        if let Some(list) = crate::process::capture_flatpak(&["list", "--app", &arch, "--columns=application,version"], t) {
-            let mut flatpaks = packages::parse_flatpak_list(&list);
-            // Bundles built from a release tarball often list no version: ask Flatpak directly.
-            for (id, version) in flatpaks.iter_mut().filter(|(id, v)| v.is_empty() && id.starts_with("ai.storyteller.")) {
-                if let Some(v) = crate::process::capture_flatpak(&["info", &arch, id], t).as_deref().and_then(packages::parse_flatpak_info) {
-                    *version = v;
+        // User installs are marked so `packages::find` reads the user copy the launcher updates, not a
+        // stale system one (#881). The unscoped list after it still covers every system installation,
+        // named ones included (`--system` is only the default one).
+        let mut user_ids = Vec::new();
+        for scope in [&["--user"][..], &[]] {
+            let list_args = [&["list", "--app"][..], scope, &[&arch, "--columns=application,version"]].concat();
+            if let Some(list) = crate::process::capture_flatpak(&list_args, t) {
+                let mut flatpaks = packages::parse_flatpak_list(&list);
+                // The unscoped list repeats the user installs: the user pass already has them.
+                flatpaks.retain(|(id, _)| !user_ids.contains(id));
+                if !scope.is_empty() {
+                    user_ids.extend(flatpaks.iter().map(|(id, _)| id.clone()));
                 }
+                // Bundles built from a release tarball often list no version: ask Flatpak directly.
+                for (id, version) in flatpaks
+                    .iter_mut()
+                    .filter(|(id, v)| v.is_empty() && artcraft_launcher_core::SUITE.iter().any(|a| a.bundle_ids().any(|b| b == *id)))
+                {
+                    let info_args = [&["info"][..], scope, &[&arch, id]].concat();
+                    if let Some(v) = crate::process::capture_flatpak(&info_args, t).as_deref().and_then(packages::parse_flatpak_info) {
+                        *version = v;
+                    }
+                }
+                add(InstallSource::Flatpak, !scope.is_empty(), flatpaks);
             }
-            add(InstallSource::Flatpak, flatpaks);
         }
         out
     }
@@ -541,7 +560,8 @@ pub mod linux {
         }
         let order = [InstallSource::Deb, InstallSource::Rpm, InstallSource::Pacman, InstallSource::Flatpak];
         if let Some(p) = packages::find(app, &snapshot.packages, &order) {
-            let location = if p.manager == InstallSource::Flatpak { app.bundle_id() } else { binary_on_path(app.id) };
+            // A Flatpak runs under the id it was found under, which may be an older one.
+            let location = if p.manager == InstallSource::Flatpak { p.name.clone() } else { binary_on_path(app.id) };
             return Some(Installed { version: packages::version_of(p), source: p.manager, location, package: Some(p.name.clone()) });
         }
         detect_system_install(app)
@@ -605,6 +625,9 @@ mod linux_tests {
         };
         assert!(ours("photocraft"));
         assert!(ours("ai.storyteller.photocraft"));
+        assert!(ours("io.tangencylabs.solidcraft"));
+        assert!(ours("ai.storyteller.solidcraft"));
+        assert!(ours("ai.storyteller.solvecraft"));
         assert!(!ours("unrelated-package"));
     }
 
@@ -880,6 +903,14 @@ mod tests {
     }
 
     #[test]
+    fn solidcraft_matches_its_own_installer_publisher_only() {
+        let sc = CraftApp::by_id("solidcraft").unwrap();
+        assert!(is_installer_entry(sc, "SolidCraft", "SolidCraft contributors"));
+        assert!(!is_installer_entry(sc, "SolidCraft", LEARNING_MACHINES));
+        assert!(!is_installer_entry(CraftApp::by_id("cadcraft").unwrap(), "CADCraft", "SolidCraft contributors"));
+    }
+
+    #[test]
     fn pdfcraft_exe_is_sought_under_every_name_it_has_shipped_as() {
         let pdf = CraftApp::by_id("pdfcraft").unwrap();
         let location = PathBuf::from(r"D:\Apps\PrintCraft");
@@ -899,9 +930,10 @@ mod tests {
         let roots = roots();
         let location = PathBuf::from(r"D:\Apps\Somewhere");
         for a in SUITE.iter().filter(|a| a.former_ids.is_empty() && a.former_names.is_empty()) {
-            assert!(is_installer_entry(a, a.name, LEARNING_MACHINES), "{}", a.name);
+            let publisher = a.msi_publisher.unwrap_or(LEARNING_MACHINES);
+            assert!(is_installer_entry(a, a.name, publisher), "{}", a.name);
             assert!(!is_installer_entry(a, a.name, "Some Other Publisher"), "{}", a.name);
-            assert!(!is_installer_entry(a, &a.name.to_lowercase(), LEARNING_MACHINES), "{}", a.name);
+            assert!(!is_installer_entry(a, &a.name.to_lowercase(), publisher), "{}", a.name);
             let exe = format!("{}.exe", a.id);
             let in_program_files: Vec<PathBuf> = roots.iter().map(|r| r.join(a.name).join(&exe)).collect();
             assert_eq!(exe_candidates(a, None, &roots), in_program_files);
