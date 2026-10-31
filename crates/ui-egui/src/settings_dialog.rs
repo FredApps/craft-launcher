@@ -193,15 +193,17 @@ impl LauncherUi {
                 self.trigger_auto_updates();
             }
             if self.caps.manage_apps {
-                let mut at_once = self.settings.simultaneous_downloads.clamp(1, 4);
+                let mut at_once = self.settings.simultaneous_downloads.min(4);
+                let no_limit = tl!("No limit").to_string();
                 row(ui, tl!("Simultaneous downloads"), 150.0, &mut |ui, label| {
                     craft_ui::ComboBox::from_id_salt("at_once")
-                        .selected_text(at_once.to_string())
+                        .selected_text(if at_once == 0 { no_limit.clone() } else { at_once.to_string() })
                         .width(150.0)
                         .show_ui(ui, |ui| {
                             for n in 1..=4 {
                                 ui.selectable_value(&mut at_once, n, n.to_string());
                             }
+                            ui.selectable_value(&mut at_once, 0, no_limit.clone());
                         })
                         .response
                         .labelled_by(label);
